@@ -138,7 +138,60 @@ td{padding:11px 14px;vertical-align:middle}
 .toast{position:fixed;bottom:22px;right:22px;background:var(--pine);color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;padding:11px 18px;border-radius:10px;border-left:4px solid var(--sun);opacity:1;transform:translateY(60px);transition:all .22s;pointer-events:none;z-index:999}
 .toast.on{opacity:1;transform:translateY(0)}
 
-@media(max-width:680px){.cards{grid-template-columns:1fr 1fr}.hdr{height:auto;padding:14px 16px;flex-direction:column;align-items:flex-start;gap:10px}.row2{grid-template-columns:1fr}}
+
+/* ── MOBILE ─────────────────────────────────────────────── */
+@media(max-width:680px){
+
+  /* header */
+  .hdr{height:auto;padding:12px 16px;gap:10px;flex-wrap:wrap}
+  .hdr-name{font-size:15px}
+  .week-row{width:100%}
+  .week-row input[type=date]{flex:1;font-size:13px}
+
+  /* cards: 2x2 grid */
+  .cards{grid-template-columns:1fr 1fr;gap:8px}
+  .card{padding:12px 14px}
+  .card-val{font-size:26px}
+
+  /* hide desktop table entirely */
+  .desktop-table{display:none}
+
+  /* mobile day switcher */
+  .mobile-view{display:block}
+  .day-switcher{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--sand);border-bottom:2px solid var(--border)}
+  .day-arrow{background:none;border:2px solid var(--border);border-radius:8px;width:36px;height:36px;font-size:18px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:900;color:var(--pine);display:flex;align-items:center;justify-content:center}
+  .day-arrow:disabled{opacity:.3;cursor:default}
+  .day-label{font-size:16px;font-weight:900;color:var(--pine);text-align:center}
+  .day-sublabel{font-size:12px;font-weight:600;color:var(--muted);text-align:center}
+
+  /* mobile staff cards */
+  .m-staff-list{padding:0}
+  .m-staff-card{display:flex;align-items:center;padding:14px 16px;border-bottom:1.5px solid #f0ebe0;gap:12px}
+  .m-staff-card:last-child{border-bottom:none}
+  .m-staff-info{flex:1;min-width:0}
+  .m-staff-name{font-size:15px;font-weight:800;color:var(--ink)}
+  .m-staff-role{font-size:12px;font-weight:600;color:var(--muted);margin-top:1px}
+  .m-staff-earn{font-size:12px;font-weight:700;color:var(--pine2);margin-top:2px}
+  .m-att-group{display:flex;gap:6px;align-items:center}
+  .m-att{width:52px;height:44px;border-radius:10px;border:2px solid var(--border);background:#f5f2ec;cursor:pointer;font-size:18px;font-weight:900;font-family:'Nunito',sans-serif;display:inline-flex;align-items:center;justify-content:center;color:transparent;transition:all .12s}
+  .m-att.present{background:var(--grn-lt);border-color:var(--leaf);color:var(--pine)}
+  .m-att.absent{background:var(--red-lt);border-color:var(--red);color:var(--red)}
+  .m-att.excused{background:var(--yel-lt);border-color:var(--sun);color:var(--bark)}
+  .m-att.locked{opacity:.28;pointer-events:none}
+  .m-edit-btn{background:none;border:none;font-size:18px;color:var(--muted);padding:6px;cursor:pointer}
+
+  /* mobile top buttons */
+  .tbox-top{flex-direction:column;align-items:flex-start}
+  .btns{width:100%}
+  .btns .btn{flex:1;text-align:center;font-size:12px;padding:7px 8px}
+
+  /* modal forms */
+  .row2{grid-template-columns:1fr}
+}
+
+/* hide mobile view on desktop */
+.mobile-view{display:none}
+
 
 /* lock screen */
 .lock{position:fixed;inset:0;background:var(--pine);display:flex;align-items:center;justify-content:center;z-index:9999}
@@ -202,7 +255,7 @@ td{padding:11px 14px;vertical-align:middle}
         <button class="btn btn-b" onclick="exportCSV()">&#8595; Export CSV</button>
       </div>
     </div>
-    <div class="scroll">
+    <div class="desktop-table"><div class="scroll">
       <table>
         <thead><tr>
           <th style="min-width:160px">Name</th>
@@ -218,7 +271,21 @@ td{padding:11px 14px;vertical-align:middle}
         </tr></thead>
         <tbody id="tbody"></tbody>
       </table>
+    </div></div>
+    
+    <!-- MOBILE VIEW (shown only on small screens) -->
+    <div class="mobile-view" id="mobileView">
+      <div class="day-switcher">
+        <button class="day-arrow" id="mPrev" onclick="mobileDay(-1)">&#8249;</button>
+        <div>
+          <div class="day-label" id="mDayLabel">-</div>
+          <div class="day-sublabel" id="mDayDate">-</div>
+        </div>
+        <button class="day-arrow" id="mNext" onclick="mobileDay(1)">&#8250;</button>
+      </div>
+      <div class="m-staff-list" id="mStaffList"></div>
     </div>
+
     <div class="legend">
       <div class="leg"><div class="lbox lp">&#10003;</div> Present</div>
       <div class="leg"><div class="lbox la">&#10007;</div> Absent (deducted)</div>
@@ -653,8 +720,81 @@ function checkAuth() {
   }
 }
 
+
+// ── MOBILE ────────────────────────────────────────────────────────────
+let mobileCol = 0;
+
+function isMobile() { return window.innerWidth <= 680; }
+
+function mobileDay(dir) {
+  mobileCol = Math.max(0, Math.min(4, mobileCol + dir));
+  renderMobile();
+}
+
+function renderMobile() {
+  if (!isMobile()) return;
+
+  // Set today as default col
+  if (todayCol >= 0) mobileCol = mobileCol !== undefined ? mobileCol : todayCol;
+
+  const mon = (() => { const [y,m,d] = weekKey.split('-').map(Number); return new Date(y,m-1,d); })();
+  const dayDate = addDays(mon, mobileCol);
+
+  document.getElementById('mDayLabel').textContent = DAYS[mobileCol] + (todayCol === mobileCol ? ' (Today)' : '');
+  document.getElementById('mDayDate').textContent  = dayDate.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+
+  document.getElementById('mPrev').disabled = mobileCol === 0;
+  document.getElementById('mNext').disabled = mobileCol === 4;
+
+  const future = todayCol >= 0 && mobileCol > todayCol;
+  const mem = staff.filter(s => s.div === activeDiv);
+  const list = document.getElementById('mStaffList');
+  list.innerHTML = '';
+
+  mem.forEach(s => {
+    const row  = getRow(s.id);
+    const val  = row[mobileCol];
+    const icon = val === 'present' ? '&#10003;' : val === 'absent' ? '&#10007;' : val === 'excused' ? '~' : '';
+    const earned = earnedAmt(s);
+    const div = document.createElement('div');
+    div.className = 'm-staff-card';
+    div.innerHTML = `
+      <div class="m-staff-info">
+        <div class="m-staff-name">${s.first} ${s.last}</div>
+        <div class="m-staff-role">${s.role}</div>
+        <div class="m-staff-earn">$${earned.toFixed(2)} earned this week</div>
+      </div>
+      <div class="m-att-group">
+        <button class="m-att ${val||''} ${future?'locked':''}" onclick="mCycleAtt(${s.id})">${icon}</button>
+        <button class="m-edit-btn" onclick="openModal(${s.id})">&#9998;</button>
+      </div>`;
+    list.appendChild(div);
+  });
+}
+
+function mCycleAtt(id) {
+  if (todayCol >= 0 && mobileCol > todayCol) return;
+  const row = getRow(id);
+  row[mobileCol] = CYCLE[(CYCLE.indexOf(row[mobileCol]) + 1) % CYCLE.length];
+  saveAll();
+  renderMobile();
+  render(); // keep cards in sync
+}
+
+// patch switchDiv and render to also call renderMobile
+const _origSwitchDiv = switchDiv;
+
+
+// call renderMobile whenever we render
+const _baseRender = render;
+function render() {
+  _baseRender();
+  if (isMobile()) renderMobile();
+}
+
 checkAuth();
 init();
+if(isMobile()){ mobileCol = todayCol >= 0 ? todayCol : 0; renderMobile(); }
 </script>
 </body>
 </html>
