@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Camp Gan Israel - Staff Payroll</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --pine:#2d5a27;--pine2:#3d7a35;--leaf:#5a9e4f;
+  --sun:#e8a020;--sun-lt:#fdf0d0;--sand:#f5edd8;--bark:#7a4f2d;
+  --cream:#faf7f0;--white:#fff;--ink:#1e2a1a;--muted:#6b7c65;--border:#d6ccb4;
+  --red:#c0392b;--red-lt:#fdecea;--grn-lt:#eaf4e8;--yel-lt:#fffbe8;
+}
+body{font-family:'Nunito',sans-serif;background:var(--cream);color:var(--ink);min-height:100vh}
+
+/* header */
+.hdr{background:var(--pine);padding:0 28px;height:64px;display:flex;align-items:center;justify-content:space-between}
+.hdr-name{font-size:18px;font-weight:900;color:#fff}
+.hdr-sub{font-size:11px;font-weight:700;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+.save-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--sun);margin-left:6px;vertical-align:middle;opacity:0;transition:opacity .3s}
+.save-dot.on{opacity:1}
+.week-row{display:flex;align-items:center;gap:8px}
+.week-row label{font-size:12px;font-weight:700;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.06em}
+.week-row input[type=date]{background:rgba(255,255,255,.12);border:1.5px solid rgba(255,255,255,.25);border-radius:8px;padding:6px 12px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;color:#fff;outline:none;cursor:pointer}
+.week-row input[type=date]:focus{border-color:var(--sun)}
+
+/* layout */
+.main{max-width:1260px;margin:0 auto;padding:24px 20px}
+
+/* tabs */
+.tabs{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap;align-items:center}
+.tab{padding:8px 18px;border-radius:30px;border:2px solid var(--border);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;background:var(--white);color:var(--muted);transition:all .13s}
+.tab:hover{border-color:var(--pine2);color:var(--pine)}
+.tab.active{background:var(--pine);color:#fff;border-color:var(--pine)}
+.tab-add{margin-left:auto;padding:8px 18px;border-radius:30px;border:2px dashed var(--border);background:transparent;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;color:var(--muted);transition:all .13s}
+.tab-add:hover{border-color:var(--pine2);color:var(--pine);background:var(--white)}
+
+/* cards */
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.card{background:var(--white);border:2px solid var(--border);border-radius:16px;padding:16px 18px}
+.card-lbl{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:4px}
+.card-val{font-size:32px;font-weight:900;line-height:1;color:var(--pine)}
+.card-note{font-size:12px;font-weight:600;color:var(--muted);margin-top:3px}
+.card.hl{background:var(--pine);border-color:var(--pine)}
+.card.hl .card-lbl{color:rgba(255,255,255,.55)}
+.card.hl .card-val{color:var(--sun)}
+.card.hl .card-note{color:rgba(255,255,255,.45)}
+
+/* table box */
+.tbox{background:var(--white);border:2px solid var(--border);border-radius:16px;overflow:hidden}
+.tbox-top{padding:14px 20px;display:flex;align-items:center;justify-content:space-between;background:var(--sand);border-bottom:2px solid var(--border);gap:10px;flex-wrap:wrap}
+.tbox-left{display:flex;align-items:center;gap:10px}
+.tbox-divname{font-size:16px;font-weight:900;color:var(--pine)}
+.tbox-count{font-size:12px;font-weight:800;background:var(--grn-lt);color:var(--pine);padding:3px 10px;border-radius:20px;border:1.5px solid #b8d8b4}
+.btns{display:flex;gap:6px;flex-wrap:wrap}
+.btn{font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;padding:7px 14px;border-radius:30px;cursor:pointer;transition:all .12s;white-space:nowrap;border:2px solid}
+.btn-g{border-color:var(--leaf);background:var(--grn-lt);color:var(--pine)}
+.btn-g:hover{background:var(--leaf);color:#fff}
+.btn-y{border-color:var(--sun);background:var(--sun-lt);color:var(--bark)}
+.btn-y:hover{background:var(--sun);color:#fff}
+.btn-b{border-color:#a0b4d6;background:#eef3fb;color:#234a8a}
+.btn-b:hover{background:#234a8a;color:#fff}
+
+/* table */
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+thead th{padding:10px 14px;text-align:left;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);background:var(--cream);border-bottom:2px solid var(--border);white-space:nowrap}
+th.dc{text-align:center;min-width:70px}
+tbody tr{border-bottom:1.5px solid #f0ebe0}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:#fdfaf4}
+td{padding:11px 14px;vertical-align:middle}
+.sname{font-weight:800;font-size:14px}
+.srole{font-size:12px;font-weight:600;color:var(--muted);margin-top:1px}
+
+/* attendance buttons */
+.awrap{text-align:center}
+.att{width:42px;height:34px;border-radius:7px;border:2px solid var(--border);background:#f5f2ec;cursor:pointer;font-size:15px;font-weight:900;font-family:'Nunito',sans-serif;display:inline-flex;align-items:center;justify-content:center;transition:all .12s;color:transparent}
+.att:hover:not(.locked){transform:scale(1.1)}
+.att.present{background:var(--grn-lt);border-color:var(--leaf);color:var(--pine)}
+.att.absent{background:var(--red-lt);border-color:var(--red);color:var(--red)}
+.att.excused{background:var(--yel-lt);border-color:var(--sun);color:var(--bark)}
+.att.locked{opacity:.28;cursor:default;pointer-events:none}
+
+/* earned */
+.earn{font-size:15px;font-weight:900}
+.ded{font-size:11px;font-weight:700;color:var(--red);margin-top:1px}
+
+/* row action buttons */
+.ic-btn{background:none;border:none;cursor:pointer;padding:4px 6px;border-radius:6px;font-size:15px;color:var(--muted);transition:all .12s;line-height:1}
+.ic-btn:hover{background:var(--sand);color:var(--pine)}
+.ic-del:hover{background:var(--red-lt);color:var(--red)}
+
+/* legend */
+.legend{padding:10px 20px;background:var(--cream);border-top:2px solid var(--sand);display:flex;gap:18px;font-size:12px;font-weight:700;color:var(--muted);flex-wrap:wrap;align-items:center}
+.leg{display:flex;align-items:center;gap:5px}
+.lbox{width:22px;height:18px;border-radius:4px;border:2px solid;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:900}
+.lp{background:var(--grn-lt);border-color:var(--leaf);color:var(--pine)}
+.la{background:var(--red-lt);border-color:var(--red);color:var(--red)}
+.le{background:var(--yel-lt);border-color:var(--sun);color:var(--bark)}
+.ln{background:#f5f2ec;border-color:var(--border)}
+.leg-hint{margin-left:auto;font-style:italic;color:#bbb;font-size:11px;font-weight:600}
+
+/* modals */
+.ov{display:none;position:fixed;inset:0;background:rgba(20,35,18,.52);z-index:200;align-items:center;justify-content:center}
+.ov.open{display:flex}
+.modal{background:var(--white);border-radius:16px;padding:28px;width:480px;max-width:95vw;max-height:90vh;overflow-y:auto;border:2px solid var(--border)}
+.modal h2{font-size:20px;font-weight:900;color:var(--pine);margin-bottom:20px}
+.fg{display:flex;flex-direction:column;gap:4px;margin-bottom:13px}
+.fg label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.fg input,.fg select{border:2px solid var(--border);border-radius:9px;padding:9px 12px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:600;outline:none;background:var(--cream);color:var(--ink);width:100%}
+.fg input:focus,.fg select:focus{border-color:var(--pine2);background:#fff}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mfoot{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:18px;border-top:2px solid var(--sand);align-items:center}
+.mfoot-left{margin-right:auto}
+.mbtn{font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;padding:9px 20px;border-radius:30px;cursor:pointer;border:2px solid}
+.mbtn-x{background:transparent;border-color:var(--border);color:var(--muted)}
+.mbtn-s{background:var(--pine);border-color:var(--pine);color:#fff}
+.mbtn-s:hover{background:var(--pine2)}
+.mbtn-d{background:var(--red-lt);border-color:var(--red);color:var(--red)}
+.mbtn-d:hover{background:var(--red);color:#fff}
+
+/* payroll modal */
+.pdiv-head{display:flex;justify-content:space-between;padding:9px 0 5px;border-bottom:2px solid var(--sand);margin-bottom:6px}
+.pdiv-name,.pdiv-tot{font-size:14px;font-weight:900;color:var(--pine)}
+.ptbl{width:100%;border-collapse:collapse;margin-bottom:14px}
+.ptbl th{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:5px 8px;text-align:left;border-bottom:1.5px solid var(--border)}
+.ptbl td{padding:7px 8px;font-size:13px;font-weight:600;border-bottom:1px solid #f0ebe0}
+.ptbl tr:last-child td{border-bottom:none}
+.grand{display:flex;justify-content:space-between;align-items:center;background:var(--pine);border-radius:10px;padding:14px 20px;margin-top:10px}
+.grand-lbl{font-size:14px;font-weight:800;color:#fff}
+.grand-val{font-size:26px;font-weight:900;color:var(--sun)}
+
+/* toast */
+.toast{position:fixed;bottom:22px;right:22px;background:var(--pine);color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;padding:11px 18px;border-radius:10px;border-left:4px solid var(--sun);opacity:0;transform:translateY(60px);transition:all .22s;pointer-events:none;z-index:999}
+.toast.on{opacity:1;transform:translateY(0)}
+
+@media(max-width:680px){.cards{grid-template-columns:1fr 1fr}.hdr{height:auto;padding:14px 16px;flex-direction:column;align-items:flex-start;gap:10px}.row2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div>
+    <div class="hdr-name">Camp Gan Israel &mdash; Eastern Queens</div>
+    <div class="hdr-sub">Staff Attendance &amp; Payroll <span class="save-dot" id="dot"></span></div>
+  </div>
+  <div class="week-row">
+    <label>Week of</label>
+    <input type="date" id="wkInput" onchange="onWeekChange()">
+  </div>
+</div>
+
+<div class="main">
+
+  <div class="tabs" id="tabs"></div>
+
+  <div class="cards">
+    <div class="card"><div class="card-lbl">Staff in Division</div><div class="card-val" id="cS">-</div><div class="card-note">current view</div></div>
+    <div class="card"><div class="card-lbl">Present Today</div><div class="card-val" id="cP" style="color:var(--pine2)">-</div><div class="card-note" id="cPN">-</div></div>
+    <div class="card"><div class="card-lbl">Absences This Week</div><div class="card-val" id="cA" style="color:var(--red)">-</div><div class="card-note">this division</div></div>
+    <div class="card hl"><div class="card-lbl">Projected Pay</div><div class="card-val" id="cW">-</div><div class="card-note">this division this week</div></div>
+  </div>
+
+  <div class="tbox">
+    <div class="tbox-top">
+      <div class="tbox-left">
+        <div class="tbox-divname" id="tDN">-</div>
+        <div class="tbox-count" id="tCt">-</div>
+      </div>
+      <div class="btns">
+        <button class="btn btn-g" onclick="markPresent()">&#10003; Mark All Present</button>
+        <button class="btn btn-y" onclick="openPayroll()">Payroll Summary</button>
+        <button class="btn btn-b" onclick="exportCSV()">&#8595; Export CSV</button>
+      </div>
+    </div>
+    <div class="scroll">
+      <table>
+        <thead><tr>
+          <th style="min-width:160px">Name</th>
+          <th style="min-width:140px">Role</th>
+          <th class="dc" id="h0"></th>
+          <th class="dc" id="h1"></th>
+          <th class="dc" id="h2"></th>
+          <th class="dc" id="h3"></th>
+          <th class="dc" id="h4"></th>
+          <th>Weekly Rate</th>
+          <th>Earned</th>
+          <th></th>
+        </tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div class="legend">
+      <div class="leg"><div class="lbox lp">&#10003;</div> Present</div>
+      <div class="leg"><div class="lbox la">&#10007;</div> Absent (deducted)</div>
+      <div class="leg"><div class="lbox le">~</div> Excused (no deduct)</div>
+      <div class="leg"><div class="lbox ln"></div> Not marked</div>
+      <div class="leg-hint">Click day to cycle &bull; &#9998; to edit</div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="ov" id="editOv" onclick="bgClose(event,'editOv')">
+  <div class="modal">
+    <h2 id="mTitle">Add Staff Member</h2>
+    <div class="row2">
+      <div class="fg"><label>First Name</label><input id="mFi" placeholder="First"></div>
+      <div class="fg"><label>Last Name</label><input id="mLa" placeholder="Last"></div>
+    </div>
+    <div class="row2">
+      <div class="fg">
+        <label>Role</label>
+        <select id="mRo">
+          <option value="Director">Director</option>
+          <option value="Office">Office</option>
+          <option value="Head Counselor">Head Counselor</option>
+          <option value="Counselor" selected>Counselor</option>
+          <option value="Junior Counselor">Junior Counselor</option>
+        </select>
+      </div>
+      <div class="fg"><label>Division</label><select id="mDi"></select></div>
+    </div>
+    <div class="fg" style="max-width:180px">
+      <label>Weekly Salary ($)</label>
+      <input id="mSa" type="number" placeholder="500" min="0">
+    </div>
+    <div class="mfoot">
+      <div class="mfoot-left">
+        <button class="mbtn mbtn-d" id="delBtn" onclick="doDelete()" style="display:none">Remove Staff</button>
+      </div>
+      <button class="mbtn mbtn-x" onclick="closeOv('editOv')">Cancel</button>
+      <button class="mbtn mbtn-s" onclick="saveStaff()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAYROLL MODAL -->
+<div class="ov" id="payOv" onclick="bgClose(event,'payOv')">
+  <div class="modal" style="width:560px">
+    <h2>Payroll Summary</h2>
+    <div id="payBody"></div>
+    <div class="mfoot">
+      <button class="mbtn mbtn-x" onclick="closeOv('payOv')">Close</button>
+      <button class="mbtn mbtn-s" onclick="exportCSV();closeOv('payOv')">&#8595; Export CSV</button>
+      <button class="mbtn mbtn-s" onclick="window.print()" style="background:var(--bark);border-color:var(--bark)">Print</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── data ──────────────────────────────────────────────────────────────
+const DIVS = [
+  {id:'boys',   name:'Boys Division'},
+  {id:'girls',  name:'Girls Division'},
+  {id:'kiddie', name:'Kiddie Camp'},
+  {id:'sports', name:'Sports Camp'},
+  {id:'cteen',  name:'CTeen Travel'},
+];
+const ROLES = ['Director','Office','Head Counselor','Counselor','Junior Counselor'];
+const DAYS  = ['Mon','Tue','Wed','Thu','Fri'];
+const CYCLE = [null,'present','absent','excused'];
+
+// default dummy roster
+const DEFAULTS = [
+  {id:1, first:'Moshe',    last:'Goldberg',  role:'Head Counselor',   div:'boys',   sal:700},
+  {id:2, first:'Dovid',    last:'Katz',      role:'Counselor',        div:'boys',   sal:480},
+  {id:3, first:'Yitzchak', last:'Levy',      role:'Counselor',        div:'boys',   sal:480},
+  {id:4, first:'Menachem', last:'Friedman',  role:'Junior Counselor', div:'boys',   sal:350},
+  {id:5, first:'Chana',    last:'Shapiro',   role:'Head Counselor',   div:'girls',  sal:700},
+  {id:6, first:'Rivka',    last:'Bernstein', role:'Counselor',        div:'girls',  sal:480},
+  {id:7, first:'Leah',     last:'Moskowitz', role:'Counselor',        div:'girls',  sal:480},
+  {id:8, first:'Miriam',   last:'Cohen',     role:'Junior Counselor', div:'girls',  sal:350},
+  {id:9, first:'Tzippy',   last:'Hirsch',    role:'Head Counselor',   div:'kiddie', sal:650},
+  {id:10,first:'Shaina',   last:'Stern',     role:'Counselor',        div:'kiddie', sal:450},
+  {id:11,first:'Devorah',  last:'Feldman',   role:'Counselor',        div:'kiddie', sal:450},
+  {id:12,first:'Nechama',  last:'Silver',    role:'Junior Counselor', div:'kiddie', sal:320},
+  {id:13,first:'Ari',      last:'Schwartz',  role:'Director',         div:'sports', sal:750},
+  {id:14,first:'Binyamin', last:'Klein',     role:'Counselor',        div:'sports', sal:520},
+  {id:15,first:'Tzvi',     last:'Greenberg', role:'Counselor',        div:'sports', sal:520},
+  {id:16,first:'Noam',     last:'Adler',     role:'Junior Counselor', div:'sports', sal:380},
+  {id:17,first:'Yaakov',   last:'Rosenfeld', role:'Director',         div:'cteen',  sal:800},
+  {id:18,first:'Sara',     last:'Blum',      role:'Counselor',        div:'cteen',  sal:550},
+  {id:19,first:'Esther',   last:'Landau',    role:'Counselor',        div:'cteen',  sal:550},
+];
+
+// ── state ─────────────────────────────────────────────────────────────
+let staff = [], att = {}, activeDiv = 'boys', weekKey = '', todayCol = -1, editingId = null, nextId = 100;
+
+// ── storage ───────────────────────────────────────────────────────────
+function loadAll() {
+  try { staff = JSON.parse(localStorage.getItem('cgi_staff')) || DEFAULTS.map(s=>({...s})); }
+  catch(e) { staff = DEFAULTS.map(s=>({...s})); }
+  try { att = JSON.parse(localStorage.getItem('cgi_att')) || {}; }
+  catch(e) { att = {}; }
+  nextId = Math.max(0, ...staff.map(s=>s.id)) + 1;
+}
+
+function saveAll() {
+  localStorage.setItem('cgi_staff', JSON.stringify(staff));
+  localStorage.setItem('cgi_att',   JSON.stringify(att));
+  const dot = document.getElementById('dot');
+  dot.classList.add('on');
+  setTimeout(() => dot.classList.remove('on'), 1000);
+}
+
+// att[weekKey][staffId] = [null/present/absent/excused x5]
+function getRow(id) {
+  if (!att[weekKey])    att[weekKey] = {};
+  if (!att[weekKey][id]) att[weekKey][id] = [null,null,null,null,null];
+  return att[weekKey][id];
+}
+
+// ── week ──────────────────────────────────────────────────────────────
+// Simple: use local year/month/date only, never UTC conversion
+function localISO(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+day;
+}
+
+function mondayOf(d) {
+  // d is a local Date. Return the Monday of its week.
+  const dow = d.getDay(); // 0=Sun,1=Mon,...,6=Sat
+  const daysBack = dow === 0 ? 6 : dow - 1;
+  const mon = new Date(d.getFullYear(), d.getMonth(), d.getDate() - daysBack);
+  return mon;
+}
+
+function addDays(d, n) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+}
+
+function fmtShort(d) {
+  return d.toLocaleDateString('en-US', {month:'short', day:'numeric'});
+}
+
+function applyWeek(mon) {
+  weekKey = localISO(mon);
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  todayCol = -1;
+  for (let i = 0; i < 5; i++) {
+    const d = addDays(mon, i);
+    if (localISO(d) === localISO(today)) todayCol = i;
+    document.getElementById('h'+i).textContent = DAYS[i] + ' ' + fmtShort(d);
+  }
+}
+
+function init() {
+  loadAll();
+  const mon = mondayOf(new Date());
+  document.getElementById('wkInput').value = localISO(mon);
+  applyWeek(mon);
+  buildTabs();
+  switchDiv('boys');
+}
+
+function onWeekChange() {
+  const v = document.getElementById('wkInput').value; // "YYYY-MM-DD"
+  if (!v) return;
+  const [y, m, d] = v.split('-').map(Number);
+  applyWeek(new Date(y, m-1, d)); // local date, no UTC
+  render();
+}
+
+// ── tabs ──────────────────────────────────────────────────────────────
+function buildTabs() {
+  const el = document.getElementById('tabs');
+  el.innerHTML = '';
+  DIVS.forEach(d => {
+    const b = document.createElement('button');
+    b.className = 'tab' + (d.id === activeDiv ? ' active' : '');
+    b.id = 'tab-'+d.id;
+    b.textContent = d.name;
+    b.onclick = () => switchDiv(d.id);
+    el.appendChild(b);
+  });
+  const a = document.createElement('button');
+  a.className = 'tab-add';
+  a.textContent = '+ Add Staff';
+  a.onclick = () => openModal(null);
+  el.appendChild(a);
+}
+
+function switchDiv(id) {
+  activeDiv = id;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-'+id)?.classList.add('active');
+  render();
+}
+
+// ── render ────────────────────────────────────────────────────────────
+function earnedAmt(s) {
+  const row = getRow(s.id);
+  const absences = row.filter(v => v === 'absent').length;
+  return s.sal - absences * (s.sal / 5);
+}
+
+function render() {
+  const mem = staff.filter(s => s.div === activeDiv);
+  const div = DIVS.find(d => d.id === activeDiv);
+
+  document.getElementById('tDN').textContent = div.name;
+  document.getElementById('tCt').textContent = mem.length + ' staff';
+  document.getElementById('cS').textContent  = mem.length;
+
+  const presentToday = todayCol >= 0 ? mem.filter(s => getRow(s.id)[todayCol] === 'present').length : null;
+  const absentToday  = todayCol >= 0 ? mem.filter(s => getRow(s.id)[todayCol] === 'absent').length  : 0;
+  document.getElementById('cP').textContent  = presentToday !== null ? presentToday : '-';
+  document.getElementById('cPN').textContent = todayCol >= 0 ? absentToday + ' absent' : 'select current week';
+
+  const weekAbsences = mem.reduce((n,s) => n + getRow(s.id).filter(v => v === 'absent').length, 0);
+  document.getElementById('cA').textContent = weekAbsences;
+
+  const weekPay = mem.reduce((n,s) => n + earnedAmt(s), 0);
+  document.getElementById('cW').textContent = '$' + weekPay.toFixed(2);
+
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = '';
+  mem.forEach(s => {
+    const row    = getRow(s.id);
+    const earned = earnedAmt(s);
+    const deduct = s.sal - earned;
+    const tr = document.createElement('tr');
+    const dayCells = [0,1,2,3,4].map(i => {
+      const future = todayCol >= 0 && i > todayCol;
+      const val    = row[i];
+      const icon   = val === 'present' ? '&#10003;' : val === 'absent' ? '&#10007;' : val === 'excused' ? '~' : '';
+      return `<td class="awrap"><button class="att ${val||''} ${future?'locked':''}" onclick="cycleAtt(${s.id},${i})">${icon}</button></td>`;
+    }).join('');
+    tr.innerHTML = `
+      <td><div class="sname">${s.first} ${s.last}</div></td>
+      <td><div class="srole">${s.role}</div></td>
+      ${dayCells}
+      <td style="font-weight:700;color:var(--muted)">$${s.sal.toFixed(2)}</td>
+      <td>
+        <div class="earn" style="color:${deduct>0?'var(--ink)':'var(--pine2)'}">$${earned.toFixed(2)}</div>
+        ${deduct > 0.01 ? `<div class="ded">-$${deduct.toFixed(2)}</div>` : ''}
+      </td>
+      <td style="white-space:nowrap">
+        <button class="ic-btn" onclick="openModal(${s.id})" title="Edit">&#9998;</button>
+        <button class="ic-btn ic-del" onclick="quickDel(${s.id})" title="Remove">&#10005;</button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+// ── attendance ────────────────────────────────────────────────────────
+function cycleAtt(id, col) {
+  if (todayCol >= 0 && col > todayCol) return;
+  const row = getRow(id);
+  row[col] = CYCLE[(CYCLE.indexOf(row[col]) + 1) % CYCLE.length];
+  saveAll();
+  render();
+}
+
+function markPresent() {
+  if (todayCol < 0) { showToast('Select the current week first'); return; }
+  staff.filter(s => s.div === activeDiv).forEach(s => {
+    const row = getRow(s.id);
+    if (!row[todayCol]) row[todayCol] = 'present';
+  });
+  saveAll();
+  render();
+  showToast('Unmarked staff marked Present for today');
+}
+
+// ── add/edit modal ────────────────────────────────────────────────────
+function openModal(id) {
+  editingId = id;
+  const divSel = document.getElementById('mDi');
+  divSel.innerHTML = DIVS.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+
+  if (id === null) {
+    document.getElementById('mTitle').textContent = 'Add Staff Member';
+    document.getElementById('delBtn').style.display = 'none';
+    document.getElementById('mFi').value = '';
+    document.getElementById('mLa').value = '';
+    document.getElementById('mRo').value = 'Counselor';
+    document.getElementById('mSa').value = '';
+    divSel.value = activeDiv;
+  } else {
+    const s = staff.find(m => m.id === id);
+    document.getElementById('mTitle').textContent = 'Edit Staff Member';
+    document.getElementById('delBtn').style.display = 'block';
+    document.getElementById('mFi').value = s.first;
+    document.getElementById('mLa').value = s.last;
+    document.getElementById('mRo').value = s.role;
+    document.getElementById('mSa').value = s.sal;
+    divSel.value = s.div;
+  }
+  openOv('editOv');
+}
+
+function saveStaff() {
+  const first = document.getElementById('mFi').value.trim();
+  const last  = document.getElementById('mLa').value.trim();
+  const role  = document.getElementById('mRo').value;
+  const div   = document.getElementById('mDi').value;
+  const sal   = parseFloat(document.getElementById('mSa').value);
+  if (!first || !last || isNaN(sal) || sal < 0) { showToast('Fill in all fields'); return; }
+
+  if (editingId === null) {
+    staff.push({id: nextId++, first, last, role, div, sal});
+    showToast(first + ' ' + last + ' added');
+  } else {
+    Object.assign(staff.find(m => m.id === editingId), {first, last, role, div, sal});
+    showToast(first + ' ' + last + ' updated');
+  }
+  saveAll();
+  closeOv('editOv');
+  buildTabs();
+  switchDiv(div);
+}
+
+function doDelete() {
+  const s = staff.find(m => m.id === editingId);
+  if (!confirm('Remove ' + s.first + ' ' + s.last + '?')) return;
+  staff = staff.filter(m => m.id !== editingId);
+  saveAll();
+  closeOv('editOv');
+  buildTabs();
+  switchDiv(activeDiv);
+  showToast(s.first + ' removed');
+}
+
+function quickDel(id) {
+  editingId = id;
+  doDelete();
+}
+
+// ── payroll modal ─────────────────────────────────────────────────────
+function openPayroll() {
+  let html = '', grand = 0;
+  DIVS.forEach(d => {
+    const mem = staff.filter(s => s.div === d.id);
+    if (!mem.length) return;
+    const tot = mem.reduce((n,s) => n + earnedAmt(s), 0);
+    grand += tot;
+    html += `
+      <div class="pdiv-head"><span class="pdiv-name">${d.name}</span><span class="pdiv-tot">$${tot.toFixed(2)}</span></div>
+      <table class="ptbl">
+        <thead><tr><th>Name</th><th>Role</th><th>Rate</th><th>Absent</th><th>Earned</th></tr></thead>
+        <tbody>${mem.map(s => {
+          const abs = getRow(s.id).filter(v=>v==='absent').length;
+          const e   = earnedAmt(s);
+          return `<tr>
+            <td style="font-weight:800">${s.first} ${s.last}</td>
+            <td style="color:var(--muted)">${s.role}</td>
+            <td>$${s.sal.toFixed(2)}</td>
+            <td style="color:${abs>0?'var(--red)':'var(--pine2)'}">${abs}d</td>
+            <td style="font-weight:800">$${e.toFixed(2)}</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>`;
+  });
+  html += `<div class="grand"><span class="grand-lbl">Total Camp Payroll</span><span class="grand-val">$${grand.toFixed(2)}</span></div>`;
+  document.getElementById('payBody').innerHTML = html;
+  openOv('payOv');
+}
+
+// ── csv export ────────────────────────────────────────────────────────
+function exportCSV() {
+  const wkLabel = weekKey ? new Date(parseInt(weekKey.split('-')[0]), parseInt(weekKey.split('-')[1])-1, parseInt(weekKey.split('-')[2])).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '';
+  const dayHdrs = [0,1,2,3,4].map(i => DAYS[i] + ' ' + fmtShort(addDays(new Date(parseInt(weekKey.split('-')[0]),parseInt(weekKey.split('-')[1])-1,parseInt(weekKey.split('-')[2])),i)));
+  const rows = [
+    ['Camp Gan Israel - Eastern Queens', 'Week of ' + wkLabel],
+    [],
+    ['Division','First Name','Last Name','Role',...dayHdrs,'Weekly Rate','Days Absent','Earned'],
+  ];
+  const lbl = {present:'P', absent:'A', excused:'E', null:'-'};
+  DIVS.forEach(d => {
+    staff.filter(s=>s.div===d.id).forEach(s => {
+      const row = getRow(s.id);
+      rows.push([d.name, s.first, s.last, s.role, ...row.map(v=>lbl[v]||'-'), s.sal.toFixed(2), row.filter(v=>v==='absent').length, earnedAmt(s).toFixed(2)]);
+    });
+    rows.push([]);
+  });
+  const csv = rows.map(r => r.map(c => '"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+  a.download = 'CGI_Payroll_' + weekKey + '.csv';
+  a.click();
+  showToast('CSV downloaded');
+}
+
+// ── helpers ───────────────────────────────────────────────────────────
+function openOv(id)  { document.getElementById(id).classList.add('open'); }
+function closeOv(id) { document.getElementById(id).classList.remove('open'); }
+function bgClose(e, id) { if (e.target === document.getElementById(id)) closeOv(id); }
+
+let toastTimer;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('on'), 2600);
+}
+
+init();
+</script>
+</body>
+</html>
